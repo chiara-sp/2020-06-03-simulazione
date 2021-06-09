@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import it.polito.tdp.PremierLeague.model.Action;
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Player;
 
 public class PremierLeagueDAO {
@@ -89,4 +90,33 @@ public class PremierLeagueDAO {
 			return null;
 		}
 	}
+	public List<Adiacenza> getAdiacenze(Map<Integer,Player> mapPlayers){
+		
+		String sql="select a1.`PlayerID` as p1, a2.`PlayerID` as p2,(SUM(a1.`TimePlayed`)- SUM(a2.`TimePlayed`)) as peso "
+				+ "from actions a1, actions a2 "
+				+ "where a1.`PlayerID`<a2.`PlayerID` and a1.`MatchID`=a2.`MatchID` and a1.`TeamID`!= a2.`TeamID` and a1.`Starts`=1 and a2.`Starts`=1 "
+				+ "group by a1.`PlayerID`, a2.`PlayerID` ";
+		List<Adiacenza> result= new LinkedList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				Player p1= mapPlayers.get(res.getInt("p1"));
+				Player p2= mapPlayers.get(res.getInt("p2"));
+				if(p1!= null && p2!=null) {
+					Adiacenza a= new Adiacenza(p1,p2,res.getDouble("peso"));
+					result.add(a);
+				}
+			}
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 }

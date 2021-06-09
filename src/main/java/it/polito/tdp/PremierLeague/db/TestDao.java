@@ -23,6 +23,7 @@ public class TestDao {
 		dao.listAllPlayers(mappa);
 		
 		System.out.println(mappa.toString());
+		System.out.print(dao.getAdiacenze(mappa));
 	}
 
 }
