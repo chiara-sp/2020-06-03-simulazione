@@ -16,18 +16,25 @@ public class Model {
 	private Map<Integer, Player> mapPlayers;
 	private PremierLeagueDAO dao;
 	private SimpleDirectedWeightedGraph<Player,DefaultWeightedEdge> grafo;
+	List<Player> soluzione;
+	List<Player> vertici;
+	double gradoMax=0;
+	
+	
 	
 	public Model() {
 		mapPlayers= new HashMap<>();
 		dao= new PremierLeagueDAO();
 		dao.listAllPlayers(mapPlayers);
+		vertici= new LinkedList<>();
 	}
 	
 	public void creaGrafo(double min) {
 		grafo= new SimpleDirectedWeightedGraph<Player,DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		
-		//aggiunta vertici 
-		Graphs.addAllVertices(grafo, dao.getPlayersGoal(min, mapPlayers));
+		//aggiunta vertici
+		vertici=dao.getPlayersGoal(min, mapPlayers);
+		Graphs.addAllVertices(grafo, vertici);
 		
 		//aggiunta archi
 		List<Adiacenza> adiacenze= dao.getAdiacenze(mapPlayers);
@@ -76,4 +83,63 @@ public class Model {
 		}
 		return result;
 	}
+	public List<Player> ricorsione(int k){
+		this.soluzione=new LinkedList<>();
+		
+		List<Player> possibiliAggiunte= new LinkedList<>(vertici);
+		this.gradoMax=0;
+		List<Player> parziale= new LinkedList<>();
+		
+		cerca(0, parziale, 0, k, possibiliAggiunte);
+		
+		return soluzione;
+	}
+
+	private void cerca(int livello, List<Player> parziale, int grado, int k, List<Player>possibiliAggiunte) {
+		// TODO Auto-generated method stub
+		if(parziale.size()>k)
+			return;
+		if(parziale.size()==k && grado>gradoMax) {
+			this.gradoMax=grado;
+			soluzione= new LinkedList<>(parziale);
+			return;
+		}
+		for(Player p: vertici) {
+			double peso=0;
+			for(DefaultWeightedEdge edge: grafo.outgoingEdgesOf(p)) {
+				peso+=grafo.getEdgeWeight(edge);
+			}
+			for(DefaultWeightedEdge edge: grafo.incomingEdgesOf(p)) {
+				peso-=grafo.getEdgeWeight(edge);
+			}
+			if(possibiliAggiunte.contains(p) && !parziale.contains(p)) {
+			parziale.add(p);
+			List<Player> daTogliere= new LinkedList<>();
+			for(Opponents pp: this.getBattuti(p)) {
+				daTogliere.add(pp.getPlayer());
+			}
+			possibiliAggiunte.removeAll(daTogliere);
+			grado+=peso;
+			cerca(livello+1,parziale,grado,k , possibiliAggiunte);
+			parziale.remove(p);
+			possibiliAggiunte.addAll(daTogliere);
+			grado-=peso;
+			}
+		}
+	}
+	public boolean grafoCreato() {
+		if(grafo==null) {
+			return false;
+		}
+		return true;
+	}
+
+	public List<Player> getSoluzione() {
+		return soluzione;
+	}
+
+	public double getGradoMax() {
+		return gradoMax;
+	}
+	
 }

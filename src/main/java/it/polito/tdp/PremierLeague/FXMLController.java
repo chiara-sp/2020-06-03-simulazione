@@ -65,6 +65,24 @@ public class FXMLController {
     @FXML
     void doDreamTeam(ActionEvent event) {
 
+    	txtResult.clear();
+    	if(!model.grafoCreato()) {
+    		txtResult.appendText("creare prima il grafo");
+    		return;
+    	}
+    	int k;
+    	try {
+    		k= Integer.parseInt(txtK.getText());
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("inserire un numero");
+    		return;
+    	}
+    	model.ricorsione(k);
+    	txtResult.appendText("Dream team trovato con peso = "+model.getGradoMax()+"\n");
+    	for(Player p: model.getSoluzione()) {
+    		txtResult.appendText(p+"\n");
+    	}
     }
 
     @FXML
